@@ -6,6 +6,8 @@
     <title>Login & Daftar - Go-MotorCycle</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     <style>
         * {
             margin: 0;
@@ -15,7 +17,7 @@
         }
         
         body {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -25,12 +27,13 @@
         
         .container {
             width: 100%;
-            max-width: 450px;
+            max-width: 500px;
             background: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
             overflow: hidden;
             padding: 30px;
+            position: relative;
         }
         
         .logo {
@@ -40,14 +43,14 @@
         
         .logo i {
             font-size: 50px;
-            color: #764ba2;
+            color: #1a2a6c;
         }
         
         .logo h1 {
             font-size: 28px;
             color: #333;
             margin-top: 10px;
-            background: linear-gradient(to right, #667eea, #764ba2);
+            background: linear-gradient(to right, #1a2a6c, #b21f1f);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             font-weight: 700;
@@ -66,6 +69,7 @@
             margin-bottom: 25px;
             color: #333;
             font-weight: 600;
+            font-size: 24px;
         }
         
         .input-group {
@@ -90,29 +94,51 @@
         }
         
         .input-group input:focus {
-            border-color: #667eea;
+            border-color: #1a2a6c;
             outline: none;
-            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+            box-shadow: 0 0 0 2px rgba(26, 42, 108, 0.2);
         }
         
         .btn {
             width: 100%;
             padding: 14px;
-            background: linear-gradient(to right, #667eea, #764ba2);
+            background: linear-gradient(to right, #1a2a6c, #b21f1f);
             border: none;
             border-radius: 8px;
             color: white;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.3s, background 0.3s;
+            transition: all 0.3s;
             margin-top: 10px;
+            position: relative;
+            overflow: hidden;
         }
         
         .btn:hover {
+            background: linear-gradient(to right, #15225c, #9a1b1b);
             transform: translateY(-2px);
-            background: linear-gradient(to right, #5a6ed8, #6a3f9e);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 4px 15px rgba(26, 42, 108, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 20px;
+            height: 200%;
+            background: rgba(255,255,255,0.3);
+            transform: rotate(25deg);
+            transition: all 0.5s;
+        }
+        
+        .btn:hover::after {
+            left: 120%;
         }
         
         .toggle-form {
@@ -123,15 +149,18 @@
         }
         
         .toggle-form a {
-            color: #667eea;
+            color: #1a2a6c;
             text-decoration: none;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
+            padding: 5px;
+            border-radius: 5px;
         }
         
         .toggle-form a:hover {
             text-decoration: underline;
+            background: rgba(26, 42, 108, 0.1);
         }
         
         .message {
@@ -165,7 +194,7 @@
         
         .loading-spinner {
             border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #667eea;
+            border-left-color: #1a2a6c;
             border-radius: 50%;
             width: 30px;
             height: 30px;
@@ -187,6 +216,11 @@
             top: 42px;
             color: #777;
             cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .password-toggle i:hover {
+            color: #1a2a6c;
         }
         
         .feature-info {
@@ -194,7 +228,7 @@
             border-radius: 10px;
             padding: 15px;
             margin: 20px 0;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #1a2a6c;
         }
         
         .feature-info h3 {
@@ -207,6 +241,93 @@
             color: #666;
             font-size: 14px;
             line-height: 1.5;
+        }
+        
+        .photo-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .photo-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .photo-preview {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 2px solid #ddd;
+            margin: 10px auto;
+        }
+        
+        .photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .photo-preview.empty {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f);
+            color: white;
+            font-size: 24px;
+        }
+        
+        .tab-container {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            color: #666;
+        }
+        
+        .tab.active {
+            color: #1a2a6c;
+            border-bottom: 3px solid #1a2a6c;
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .upload-btn {
+            background: #f0f0f0;
+            border: 1px dashed #ccc;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-btn:hover {
+            background: #e0e0e0;
+            border-color: #1a2a6c;
+        }
+        
+        .file-input {
+            display: none;
         }
         
         @media (max-width: 480px) {
@@ -256,7 +377,6 @@
                 <h2 class="form-title">Buat Akun Baru</h2>
                 <div id="registerMessage" class="message"></div>
                 
-                <!-- Field baru: Nama Lengkap -->
                 <div class="input-group">
                     <label for="fullName">Nama Lengkap</label>
                     <input type="text" id="fullName" placeholder="Masukkan nama lengkap Anda" required>
@@ -266,24 +386,50 @@
                     <label for="registerEmail">Email</label>
                     <input type="email" id="registerEmail" placeholder="Masukkan email Anda" required>
                 </div>
+                
                 <div class="input-group password-toggle">
                     <label for="registerPassword">Password</label>
                     <input type="password" id="registerPassword" placeholder="Buat password (min. 6 karakter)" required>
                     <i id="toggleRegisterPassword">👁️</i>
                 </div>
+                
                 <div class="input-group password-toggle">
                     <label for="confirmPassword">Konfirmasi Password</label>
                     <input type="password" id="confirmPassword" placeholder="Konfirmasi password Anda" required>
                     <i id="toggleConfirmPassword">👁️</i>
                 </div>
+                
+                <div class="input-group">
+                    <label>Foto Profil (Opsional)</label>
+                    <div class="photo-preview" id="photoPreview">
+                        <div class="empty">👤</div>
+                    </div>
+                    
+                    <div class="tab-container">
+                        <div class="tab active" id="urlTab">URL</div>
+                        <div class="tab" id="uploadTab">Unggah</div>
+                    </div>
+                    
+                    <div class="tab-content active" id="urlTabContent">
+                        <input type="text" id="photoURL" placeholder="https://contoh.com/foto.jpg">
+                    </div>
+                    
+                    <div class="tab-content" id="uploadTabContent">
+                        <label class="upload-btn" for="photoUpload">
+                            <span>Pilih Gambar</span>
+                            <input type="file" id="photoUpload" class="file-input" accept="image/*">
+                        </label>
+                    </div>
+                </div>
+                
                 <button id="registerBtn" class="btn">Daftar</button>
                 <div class="toggle-form">
                     Sudah punya akun? <a id="showLogin">Masuk Sekarang</a>
                 </div>
                 
                 <div class="feature-info">
-                    <h3>📝 Informasi Fitur Baru</h3>
-                    <p>Kami telah menambahkan field Nama Lengkap pada pendaftaran. Nama Anda akan disimpan di Firebase Authentication dan dapat digunakan di seluruh aplikasi.</p>
+                    <h3>📝 Fitur Profil Baru</h3>
+                    <p>Anda sekarang dapat menambahkan foto profil! Pilih antara memasukkan URL langsung atau mengunggah gambar dari perangkat Anda. Foto profil akan disimpan di Firebase Storage dan ditampilkan di seluruh aplikasi.</p>
                 </div>
             </div>
             
@@ -369,8 +515,53 @@
             togglePassword('confirmPassword', 'toggleConfirmPassword');
         }
         
-        // Fungsi untuk mendaftar pengguna baru dengan nama lengkap
-        async function registerUser(email, password, fullName) {
+        // Fungsi untuk mengunggah foto ke Firebase Storage
+        async function uploadPhoto(file) {
+            try {
+                // Buat nama file unik
+                const fileName = `profile_${Date.now()}_${file.name}`;
+                
+                // Referensi ke Firebase Storage
+                const storageRef = firebase.storage().ref();
+                const fileRef = storageRef.child(`profile_photos/${fileName}`);
+                
+                // Unggah file
+                const snapshot = await fileRef.put(file);
+                
+                // Dapatkan URL download
+                const downloadURL = await snapshot.ref.getDownloadURL();
+                
+                return downloadURL;
+            } catch (error) {
+                console.error("Error uploading photo:", error);
+                throw new Error("Gagal mengunggah foto");
+            }
+        }
+        
+        // Fungsi untuk menyimpan data ke Realtime Database
+        async function saveToDatabase(userId, fullName, email, photoURL) {
+            try {
+                // Referensi ke Realtime Database
+                const db = firebase.database();
+                const userRef = db.ref(`users/${userId}`);
+                
+                // Simpan data
+                await userRef.set({
+                    nama: fullName,
+                    email: email,
+                    photoURL: photoURL || '',
+                    createdAt: firebase.database.ServerValue.TIMESTAMP
+                });
+                
+                return true;
+            } catch (error) {
+                console.error("Error saving to database:", error);
+                throw new Error("Gagal menyimpan data ke database");
+            }
+        }
+        
+        // Fungsi untuk mendaftar pengguna baru dengan nama lengkap dan foto profil
+        async function registerUser(email, password, fullName, photoURL) {
             showLoading(true);
             
             try {
@@ -378,13 +569,17 @@
                 const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
                 const user = userCredential.user;
                 
-                // Update profil dengan nama lengkap
+                // Update profil dengan nama lengkap dan foto
                 await user.updateProfile({
-                    displayName: fullName
+                    displayName: fullName,
+                    photoURL: photoURL || null
                 });
                 
+                // Simpan data tambahan ke Realtime Database
+                await saveToDatabase(user.uid, fullName, email, photoURL);
+                
                 // Kirim informasi pendaftaran berhasil ke WebView
-                window.AppInventor.setWebViewString(`SUCCESS:register|${user.uid}|${fullName}`);
+                window.AppInventor.setWebViewString(`SUCCESS:register|${user.uid}|${fullName}|${photoURL || ''}`);
                 showMessage('registerMessage', 'Pendaftaran berhasil! Silahkan login.', false);
                 
                 // Reset form setelah pendaftaran berhasil
@@ -392,6 +587,8 @@
                 document.getElementById('registerEmail').value = '';
                 document.getElementById('registerPassword').value = '';
                 document.getElementById('confirmPassword').value = '';
+                document.getElementById('photoURL').value = '';
+                document.getElementById('photoPreview').innerHTML = '<div class="empty">👤</div>';
                 
                 // Kembali ke form login setelah 2 detik
                 setTimeout(() => {
@@ -416,10 +613,12 @@
                 const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
                 
-                // Dapatkan displayName (nama lengkap) dari user
+                // Dapatkan displayName (nama lengkap) dan photoURL dari user
                 const displayName = user.displayName || 'Pengguna';
+                const photoURL = user.photoURL || '';
                 
-                window.AppInventor.setWebViewString(`SUCCESS:login|${user.uid}|${displayName}`);
+                // Kirim data lengkap ke WebView
+                window.AppInventor.setWebViewString(`SUCCESS:login|${user.uid}|${displayName}|${photoURL}`);
                 showMessage('loginMessage', 'Login berhasil!', false);
                 
                 // Reset form setelah login berhasil
@@ -472,8 +671,48 @@
                 window.AppInventor.setWebViewString("ACTION:Menampilkan form login");
             });
             
+            // Event untuk tab foto profil
+            document.getElementById('urlTab').addEventListener('click', function() {
+                document.getElementById('urlTab').classList.add('active');
+                document.getElementById('uploadTab').classList.remove('active');
+                document.getElementById('urlTabContent').classList.add('active');
+                document.getElementById('uploadTabContent').classList.remove('active');
+            });
+            
+            document.getElementById('uploadTab').addEventListener('click', function() {
+                document.getElementById('uploadTab').classList.add('active');
+                document.getElementById('urlTab').classList.remove('active');
+                document.getElementById('uploadTabContent').classList.add('active');
+                document.getElementById('urlTabContent').classList.remove('active');
+            });
+            
+            // Event untuk preview gambar yang diunggah
+            document.getElementById('photoUpload').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const preview = document.getElementById('photoPreview');
+                        preview.innerHTML = `<img src="${event.target.result}" alt="Preview Foto">`;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Event untuk preview dari URL
+            document.getElementById('photoURL').addEventListener('blur', function() {
+                const url = this.value.trim();
+                if (url) {
+                    const preview = document.getElementById('photoPreview');
+                    preview.innerHTML = `<img src="${url}" alt="Preview Foto">`;
+                } else {
+                    const preview = document.getElementById('photoPreview');
+                    preview.innerHTML = '<div class="empty">👤</div>';
+                }
+            });
+            
             // Event untuk pendaftaran
-            document.getElementById('registerBtn').addEventListener('click', function() {
+            document.getElementById('registerBtn').addEventListener('click', async function() {
                 const fullName = document.getElementById('fullName').value;
                 const email = document.getElementById('registerEmail').value;
                 const password = document.getElementById('registerPassword').value;
@@ -481,7 +720,7 @@
                 
                 // Validasi input
                 if (!fullName || !email || !password || !confirmPassword) {
-                    showMessage('registerMessage', 'Semua field harus diisi!', true);
+                    showMessage('registerMessage', 'Semua field wajib diisi!', true);
                     return;
                 }
                 
@@ -495,7 +734,24 @@
                     return;
                 }
                 
-                registerUser(email, password, fullName);
+                let photoURL = document.getElementById('photoURL').value.trim();
+                const fileInput = document.getElementById('photoUpload');
+                
+                // Jika ada file yang diunggah, prioritaskan
+                if (fileInput.files.length > 0) {
+                    try {
+                        showLoading(true);
+                        const file = fileInput.files[0];
+                        photoURL = await uploadPhoto(file);
+                    } catch (error) {
+                        showMessage('registerMessage', 'Gagal mengunggah foto: ' + error.message, true);
+                        showLoading(false);
+                        return;
+                    }
+                }
+                
+                // Lanjutkan dengan pendaftaran
+                registerUser(email, password, fullName, photoURL);
             });
             
             // Event untuk login
@@ -512,22 +768,16 @@
             });
             
             // Tambahkan event listener untuk tombol Enter
-            document.getElementById('fullName').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    document.getElementById('registerBtn').click();
-                }
-            });
+            const registerFields = [
+                'fullName', 'registerEmail', 'registerPassword', 'confirmPassword', 'photoURL'
+            ];
             
-            document.getElementById('registerPassword').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    document.getElementById('registerBtn').click();
-                }
-            });
-            
-            document.getElementById('confirmPassword').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    document.getElementById('registerBtn').click();
-                }
+            registerFields.forEach(field => {
+                document.getElementById(field).addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        document.getElementById('registerBtn').click();
+                    }
+                });
             });
             
             document.getElementById('loginPassword').addEventListener('keypress', function(e) {
