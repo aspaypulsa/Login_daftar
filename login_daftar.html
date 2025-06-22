@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login & Daftar - Firebase</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 400px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            padding: 30px;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .logo i {
+            font-size: 50px;
+            color: #764ba2;
+        }
+        
+        .logo h1 {
+            font-size: 24px;
+            color: #333;
+            margin-top: 10px;
+        }
+        
+        .form-container {
+            position: relative;
+        }
+        
+        .form {
+            transition: all 0.6s ease-in-out;
+        }
+        
+        .form-title {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #333;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .input-group input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s, background 0.3s;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(to right, #5a6ed8, #6a3f9e);
+        }
+        
+        .toggle-form {
+            text-align: center;
+            margin-top: 25px;
+            color: #666;
+        }
+        
+        .toggle-form a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .toggle-form a:hover {
+            text-decoration: underline;
+        }
+        
+        .message {
+            text-align: center;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            font-weight: 500;
+            display: none;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        
+        .loading {
+            text-align: center;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .logo h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <i>🔐</i>
+            <h1>Go-MotorCycle</h1>
+        </div>
+        
+        <div class="form-container">
+            <!-- Form Login -->
+            <div id="loginForm" class="form">
+                <h2 class="form-title">Masuk ke Akun Anda</h2>
+                <div id="loginMessage" class="message"></div>
+                <div class="input-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" placeholder="Masukkan email Anda" required>
+                </div>
+                <div class="input-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" placeholder="Masukkan password Anda" required>
+                </div>
+                <button id="loginBtn" class="btn">Masuk</button>
+                <div class="toggle-form">
+                    Belum punya akun? <a id="showRegister">Daftar Sekarang</a>
+                </div>
+            </div>
+            
+            <!-- Form Register -->
+            <div id="registerForm" class="form" style="display: none;">
+                <h2 class="form-title">Buat Akun Baru</h2>
+                <div id="registerMessage" class="message"></div>
+                <div class="input-group">
+                    <label for="registerEmail">Email</label>
+                    <input type="email" id="registerEmail" placeholder="Masukkan email Anda" required>
+                </div>
+                <div class="input-group">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" placeholder="Buat password (min. 6 karakter)" required>
+                </div>
+                <div class="input-group">
+                    <label for="confirmPassword">Konfirmasi Password</label>
+                    <input type="password" id="confirmPassword" placeholder="Konfirmasi password Anda" required>
+                </div>
+                <button id="registerBtn" class="btn">Daftar</button>
+                <div class="toggle-form">
+                    Sudah punya akun? <a id="showLogin">Masuk Sekarang</a>
+                </div>
+            </div>
+            
+            <div id="loading" class="loading">
+                <div class="loading-spinner"></div>
+                <p>Memproses...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Fungsi untuk mendapatkan parameter dari URL
+        function getUrlParams() {
+            const params = {};
+            const queryString = window.location.search.substring(1);
+            const regex = /([^&=]+)=([^&]*)/g;
+            let match;
+            
+            while ((match = regex.exec(queryString)) !== null) {
+                params[decodeURIComponent(match[1])] = decodeURIComponent(match[2]);
+            }
+            
+            return params;
+        }
+        
+        // Fungsi untuk menginisialisasi Firebase
+        function initializeFirebase(params) {
+            // Kirim status inisialisasi
+            window.AppInventor.setWebViewString("INIT:Memulai inisialisasi Firebase");
+            
+            try {
+                const firebaseConfig = {
+                    apiKey: params.apiKey,
+                    authDomain: params.authDomain,
+                    projectId: params.projectId,
+                    storageBucket: params.storageBucket,
+                    messagingSenderId: params.messagingSenderId,
+                    appId: params.appId
+                };
+                
+                firebase.initializeApp(firebaseConfig);
+                window.AppInventor.setWebViewString("SUCCESS:Firebase berhasil diinisialisasi");
+                return true;
+            } catch (error) {
+                window.AppInventor.setWebViewString(`ERROR:init|${error.message}`);
+                return false;
+            }
+        }
+        
+        // Fungsi untuk menampilkan pesan
+        function showMessage(element, message, isError = false) {
+            const messageElement = document.getElementById(element);
+            messageElement.textContent = message;
+            messageElement.className = isError ? 'message error' : 'message success';
+            messageElement.style.display = 'block';
+            
+            // Sembunyikan pesan setelah 5 detik
+            setTimeout(() => {
+                messageElement.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Fungsi untuk menampilkan loading
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+        
+        // Fungsi untuk mendaftar pengguna baru
+        async function registerUser(email, password) {
+            showLoading(true);
+            
+            try {
+                const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                window.AppInventor.setWebViewString(`SUCCESS:register|${user.uid}`);
+                showMessage('registerMessage', 'Pendaftaran berhasil!', false);
+                
+                // Reset form setelah pendaftaran berhasil
+                document.getElementById('registerEmail').value = '';
+                document.getElementById('registerPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+                
+                // Kembali ke form login
+                document.getElementById('loginForm').style.display = 'block';
+                document.getElementById('registerForm').style.display = 'none';
+            } catch (error) {
+                const errorMessage = error.message || 'Terjadi kesalahan saat pendaftaran';
+                window.AppInventor.setWebViewString(`ERROR:register|${errorMessage}`);
+                showMessage('registerMessage', errorMessage, true);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Fungsi untuk login pengguna
+        async function loginUser(email, password) {
+            showLoading(true);
+            
+            try {
+                const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                window.AppInventor.setWebViewString(`SUCCESS:login|${user.uid}`);
+                showMessage('loginMessage', 'Login berhasil!', false);
+                
+                // Reset form setelah login berhasil
+                document.getElementById('loginEmail').value = '';
+                document.getElementById('loginPassword').value = '';
+            } catch (error) {
+                const errorMessage = error.message || 'Terjadi kesalahan saat login';
+                window.AppInventor.setWebViewString(`ERROR:login|${errorMessage}`);
+                showMessage('loginMessage', errorMessage, true);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Event saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', function() {
+            // Kirim status bahwa halaman dimuat
+            window.AppInventor.setWebViewString("LOADED:Halaman login dan daftar telah dimuat");
+            
+            // Dapatkan parameter dari URL
+            const params = getUrlParams();
+            
+            // Inisialisasi Firebase jika semua parameter tersedia
+            if (params.apiKey && params.authDomain && params.projectId && 
+                params.storageBucket && params.messagingSenderId && params.appId) {
+                
+                if (initializeFirebase(params)) {
+                    // Kirim konfirmasi inisialisasi berhasil
+                    window.AppInventor.setWebViewString("INIT_COMPLETE:Firebase siap digunakan");
+                }
+            } else {
+                // Kirim error jika parameter tidak lengkap
+                window.AppInventor.setWebViewString("ERROR:init|Parameter Firebase tidak lengkap");
+                showMessage('loginMessage', 'Parameter Firebase tidak lengkap. Mohon periksa URL.', true);
+            }
+            
+            // Event untuk toggle form
+            document.getElementById('showRegister').addEventListener('click', function() {
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('registerForm').style.display = 'block';
+                window.AppInventor.setWebViewString("ACTION:Menampilkan form pendaftaran");
+            });
+            
+            document.getElementById('showLogin').addEventListener('click', function() {
+                document.getElementById('registerForm').style.display = 'none';
+                document.getElementById('loginForm').style.display = 'block';
+                window.AppInventor.setWebViewString("ACTION:Menampilkan form login");
+            });
+            
+            // Event untuk pendaftaran
+            document.getElementById('registerBtn').addEventListener('click', function() {
+                const email = document.getElementById('registerEmail').value;
+                const password = document.getElementById('registerPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                
+                if (!email || !password || !confirmPassword) {
+                    showMessage('registerMessage', 'Semua field harus diisi!', true);
+                    return;
+                }
+                
+                if (password !== confirmPassword) {
+                    showMessage('registerMessage', 'Password dan konfirmasi password tidak cocok!', true);
+                    return;
+                }
+                
+                if (password.length < 6) {
+                    showMessage('registerMessage', 'Password harus memiliki minimal 6 karakter!', true);
+                    return;
+                }
+                
+                registerUser(email, password);
+            });
+            
+            // Event untuk login
+            document.getElementById('loginBtn').addEventListener('click', function() {
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                
+                if (!email || !password) {
+                    showMessage('loginMessage', 'Email dan password harus diisi!', true);
+                    return;
+                }
+                
+                loginUser(email, password);
+            });
+            
+            // Tambahkan event listener untuk tombol Enter
+            document.getElementById('registerPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('registerBtn').click();
+                }
+            });
+            
+            document.getElementById('confirmPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('registerBtn').click();
+                }
+            });
+            
+            document.getElementById('loginPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('loginBtn').click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
