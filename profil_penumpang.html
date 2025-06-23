@@ -557,6 +557,22 @@
         const initialPhone = urlParams.get('phone');
         const imgbbKey = urlParams.get('imgbbKey');
         
+        // Fungsi untuk mengirim data kembali ke App Inventor
+        function sendToAppInventor(data) {
+            // Jika dijalankan di WebView Android
+            if (window.Android) {
+                window.Android.receiveFromWeb(JSON.stringify(data));
+            } 
+            // Jika dijalankan di WebView iOS (WKWebView)
+            else if (window.webkit && window.webkit.messageHandlers) {
+                window.webkit.messageHandlers.iosHandler.postMessage(data);
+            }
+            // Untuk debugging di browser
+            else {
+                console.log("Data untuk App Inventor:", data);
+            }
+        }
+        
         // Fungsi untuk menampilkan notifikasi
         function showNotification(message, type) {
             const notification = document.getElementById('notification');
@@ -595,48 +611,9 @@
             saveBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Profil';
         }
         
-        // Fungsi untuk mengirim data kembali ke App Inventor
-        function sendToAppInventor(data) {
-            // Jika dijalankan di WebView App Inventor
-            if (window.app && window.app.inventor) {
-                try {
-                    window.app.inventor.webstring = JSON.stringify(data);
-                    console.log("Data dikirim via window.app.inventor.webstring");
-                    return true;
-                } catch (e) {
-                    console.error("Gagal mengirim via window.app.inventor.webstring:", e);
-                }
-            }
-            
-            // Jika dijalankan di WebView Android
-            if (window.Android) {
-                try {
-                    window.Android.receiveFromWeb(JSON.stringify(data));
-                    console.log("Data dikirim via Android");
-                    return true;
-                } catch (e) {
-                    console.error("Gagal mengirim via Android:", e);
-                }
-            }
-            
-            // Jika dijalankan di WebView iOS (WKWebView)
-            if (window.webkit && window.webkit.messageHandlers) {
-                try {
-                    window.webkit.messageHandlers.iosHandler.postMessage(data);
-                    console.log("Data dikirim via iOS");
-                    return true;
-                } catch (e) {
-                    console.error("Gagal mengirim via iOS:", e);
-                }
-            }
-            
-            console.warn("Tidak ada metode pengiriman yang tersedia, data:", data);
-            return false;
-        }
-        
         // Isi nilai awal jika ada di URL
         if (initialPhone) {
-            phoneInput.value = initialPhone.replace(/\D/g, '');
+            phoneInput.value = initialPhone;
             userData.phone = initialPhone;
         }
         
@@ -742,16 +719,11 @@
                 userData.photoUrl = result.data.url;
                 
                 // Kirim data ke App Inventor
-                const dataToSend = {
-                    status: "success",
+                sendToAppInventor({
+                    action: "profile_update_success",
                     phone: userData.phone,
-                    photoUrl: userData.photoUrl,
-                    timestamp: new Date().toISOString()
-                };
-                
-                if (!sendToAppInventor(dataToSend)) {
-                    throw new Error("Gagal mengirim data ke App Inventor");
-                }
+                    photoUrl: userData.photoUrl
+                });
                 
                 // Tampilkan notifikasi sukses
                 showNotification('Profil berhasil disimpan!', 'success');
@@ -762,10 +734,8 @@
                 
                 // Kirim error ke aplikasi
                 sendToAppInventor({
-                    status: "error",
-                    message: error.message,
-                    phone: userData.phone || "",
-                    error: error.toString()
+                    action: "profile_update_error",
+                    error: error.message
                 });
                 
             } finally {
