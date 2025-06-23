@@ -1,163 +1,292 @@
-<script>
-    // Data pengguna
-    let userData = {
-        phone: "",
-        photoFile: null,
-        photoUrl: ""
-    };
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil Penumpang - Simpan Data</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            max-width: 500px;
+            width: 100%;
+            padding: 30px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* (Tetap pertahankan semua CSS sebelumnya yang Anda miliki) */
+        /* ... [Semua kode CSS sebelumnya tetap sama] ... */
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <h1>Profil Penumpang</h1>
+            <p>Lengkapi data diri Anda untuk pengalaman perjalanan yang lebih baik</p>
+        </div>
+        
+        <form id="profileForm">
+            <div class="form-group">
+                <label for="phone">Nomor HP</label>
+                <div class="phone-input-container">
+                    <div class="country-code">+62</div>
+                    <div class="input-with-icon" style="flex: 1">
+                        <i class="fas fa-phone"></i>
+                        <input type="tel" id="phone" placeholder="Contoh: 82312345678" required>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="photo-upload">
+                <div class="photo-preview" id="photoPreview">
+                    <i class="fas fa-camera"></i>
+                    <img id="previewImage" src="" alt="Preview Foto">
+                </div>
+                <div class="upload-btn" id="uploadTrigger">
+                    <i class="fas fa-upload"></i> Pilih Foto Profil
+                </div>
+                <input type="file" id="fileInput" accept="image/*">
+                <div class="status-badge">Maksimal 5MB</div>
+            </div>
+            
+            <button type="submit" class="save-btn" id="saveBtn">
+                <i class="fas fa-save"></i> Simpan Profil
+            </button>
+        </form>
+        
+        <div class="tech-container">
+            <div class="tech-item">
+                <div class="tech-icon">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <div class="tech-label">WebView</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <div class="tech-label">imgBB</div>
+            </div>
+        </div>
+    </div>
     
-    // Elemen DOM
-    const phoneInput = document.getElementById('phone');
-    const fileInput = document.getElementById('fileInput');
-    const uploadTrigger = document.getElementById('uploadTrigger');
-    const photoPreview = document.getElementById('photoPreview');
-    const previewImage = document.getElementById('previewImage'); // Diperbaiki dari 'previewImage'
-    const saveBtn = document.getElementById('saveBtn');
-    const profileForm = document.getElementById('profileForm');
-    
-    // Parse parameter URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const initialPhone = urlParams.get('phone');
-    const imgbbKey = urlParams.get('imgbbKey');
+    <script>
+        // Data pengguna
+        let userData = {
+            phone: "",
+            photoFile: null,
+            photoUrl: ""
+        };
+        
+        // Elemen DOM
+        const phoneInput = document.getElementById('phone');
+        const fileInput = document.getElementById('fileInput');
+        const uploadTrigger = document.getElementById('uploadTrigger');
+        const photoPreview = document.getElementById('photoPreview');
+        const previewImage = document.getElementById('previewImage');
+        const saveBtn = document.getElementById('saveBtn');
+        const profileForm = document.getElementById('profileForm');
+        
+        // Parse parameter URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const initialPhone = urlParams.get('phone');
+        const imgbbKey = urlParams.get('imgbbKey');
 
-    // Fungsi untuk mengirim data ke App Inventor
-    function sendToAppInventor(data) {
-        try {
+        // Fungsi untuk mengirim data ke App Inventor
+        function sendToAppInventor(data) {
+            console.log("Mengirim data:", data);
+            
             // Method 1: Untuk WebView App Inventor modern
             if (window.app && window.app.inventor) {
-                window.app.inventor.webstring = JSON.stringify(data);
-                return;
+                try {
+                    window.app.inventor.webstring = JSON.stringify(data);
+                    console.log("Data terkirim via window.app.inventor.webstring");
+                    return true;
+                } catch (e) {
+                    console.error("Gagal mengirim via window.app.inventor.webstring:", e);
+                }
             }
             
             // Method 2: Untuk Android
             if (window.Android) {
-                window.Android.receiveFromWeb(JSON.stringify(data));
-                return;
+                try {
+                    window.Android.receiveFromWeb(JSON.stringify(data));
+                    console.log("Data terkirim via Android");
+                    return true;
+                } catch (e) {
+                    console.error("Gagal mengirim via Android:", e);
+                }
             }
             
             // Method 3: Untuk iOS
             if (window.webkit && window.webkit.messageHandlers) {
-                window.webkit.messageHandlers.iosHandler.postMessage(data);
-                return;
+                try {
+                    window.webkit.messageHandlers.iosHandler.postMessage(data);
+                    console.log("Data terkirim via iOS");
+                    return true;
+                } catch (e) {
+                    console.error("Gagal mengirim via iOS:", e);
+                }
             }
             
-            console.log("Data untuk App Inventor:", data);
-        } catch (error) {
-            console.error("Gagal mengirim data ke App Inventor:", error);
-        }
-    }
-
-    // Isi nilai awal jika ada di URL
-    if (initialPhone) {
-        phoneInput.value = initialPhone.replace(/\D/g, ''); // Hanya angka
-        userData.phone = initialPhone;
-    }
-
-    // Event listener untuk upload foto
-    uploadTrigger.addEventListener('click', () => fileInput.click());
-
-    fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        // Validasi
-        if (!file.type.match('image.*')) {
-            alert('Hanya file gambar yang diizinkan');
-            return;
+            console.warn("Tidak ditemukan metode pengiriman yang valid, data:", data);
+            return false;
         }
 
-        if (file.size > 5 * 1024 * 1024) {
-            alert('Ukuran file maksimal 5MB');
-            return;
+        // Isi nilai awal jika ada di URL
+        if (initialPhone) {
+            phoneInput.value = initialPhone.replace(/\D/g, '');
+            userData.phone = initialPhone;
         }
 
-        // Preview gambar
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            previewImage.src = event.target.result;
-            previewImage.style.display = 'block';
-            photoPreview.querySelector('i').style.display = 'none';
-        };
-        reader.readAsDataURL(file);
-        
-        userData.photoFile = file;
-    });
+        // Event listener untuk upload foto
+        uploadTrigger.addEventListener('click', () => fileInput.click());
 
-    // Format input nomor HP
-    phoneInput.addEventListener('input', function() {
-        this.value = this.value.replace(/\D/g, '');
-        if (this.value.length > 15) {
-            this.value = this.value.slice(0, 15);
-        }
-    });
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
 
-    // Submit form
-    profileForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        // Validasi
-        userData.phone = phoneInput.value.trim();
-        if (!userData.phone) {
-            alert('Harap isi nomor HP');
-            return;
-        }
-
-        if (!userData.photoFile) {
-            alert('Harap pilih foto profil');
-            return;
-        }
-
-        if (!imgbbKey) {
-            const errorMsg = "API Key imgBB tidak ditemukan";
-            sendToAppInventor({
-                status: "error",
-                message: errorMsg
-            });
-            alert(errorMsg);
-            return;
-        }
-
-        // Upload foto
-        try {
-            const formData = new FormData();
-            formData.append('image', userData.photoFile);
-            formData.append('key', imgbbKey);
-
-            const response = await fetch('https://api.imgbb.com/1/upload', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-
-            if (!result.success) {
-                throw new Error(result.error?.message || 'Upload gagal');
+            // Validasi
+            if (!file.type.match('image.*')) {
+                alert('Hanya file gambar yang diizinkan (JPEG, PNG)');
+                return;
             }
 
-            userData.photoUrl = result.data.url;
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Ukuran file maksimal 5MB');
+                return;
+            }
 
-            // Kirim data ke App Inventor
-            sendToAppInventor({
-                status: "success",
-                phone: userData.phone,
-                photoUrl: userData.photoUrl
-            });
+            // Preview gambar
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                previewImage.src = event.target.result;
+                previewImage.style.display = 'block';
+                photoPreview.querySelector('i').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+            
+            userData.photoFile = file;
+            console.log("Foto dipilih:", file.name);
+        });
 
-            alert('Profil berhasil disimpan!');
+        // Format input nomor HP
+        phoneInput.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '');
+            if (this.value.length > 15) {
+                this.value = this.value.slice(0, 15);
+            }
+            userData.phone = this.value;
+        });
 
-        } catch (error) {
-            console.error('Error:', error);
-            sendToAppInventor({
-                status: "error",
-                message: error.message
-            });
-            alert('Gagal menyimpan: ' + error.message);
-        }
-    });
+        // Submit form
+        profileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Validasi
+            userData.phone = phoneInput.value.trim();
+            if (!userData.phone) {
+                alert('Harap isi nomor HP');
+                return;
+            }
 
-    // Fungsi bantuan untuk debug
-    window.debugData = () => {
-        console.log("Data saat ini:", userData);
-        return userData;
-    };
-</script>
+            if (!userData.photoFile) {
+                alert('Harap pilih foto profil');
+                return;
+            }
+
+            if (!imgbbKey) {
+                const errorMsg = "API Key imgBB tidak ditemukan";
+                sendToAppInventor({
+                    status: "error",
+                    message: errorMsg
+                });
+                alert(errorMsg);
+                return;
+            }
+
+            // Tampilkan loading
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+
+            try {
+                // Upload foto ke imgBB
+                const formData = new FormData();
+                formData.append('image', userData.photoFile);
+                formData.append('key', imgbbKey);
+
+                console.log("Mengupload foto ke imgBB...");
+                const response = await fetch('https://api.imgbb.com/1/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                console.log("Hasil upload:", result);
+
+                if (!result.success) {
+                    throw new Error(result.error?.message || 'Upload foto gagal');
+                }
+
+                userData.photoUrl = result.data.url;
+                console.log("Foto berhasil diupload:", userData.photoUrl);
+
+                // Kirim data ke App Inventor
+                const dataToSend = {
+                    status: "success",
+                    phone: userData.phone,
+                    photoUrl: userData.photoUrl,
+                    timestamp: new Date().toISOString()
+                };
+
+                if (!sendToAppInventor(dataToSend)) {
+                    throw new Error("Gagal mengirim data ke App Inventor");
+                }
+
+                alert('Profil berhasil disimpan!\nNomor: ' + userData.phone + '\nFoto: ' + userData.photoUrl);
+
+            } catch (error) {
+                console.error('Error:', error);
+                sendToAppInventor({
+                    status: "error",
+                    message: error.message,
+                    phone: userData.phone
+                });
+                alert('Gagal menyimpan: ' + error.message);
+            } finally {
+                // Reset tombol
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Profil';
+            }
+        });
+
+        // Fungsi untuk debugging
+        window.getUserData = function() {
+            return userData;
+        };
+    </script>
+</body>
+</html>
