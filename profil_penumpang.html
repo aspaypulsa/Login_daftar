@@ -557,6 +557,22 @@
         const initialPhone = urlParams.get('phone');
         const imgbbKey = urlParams.get('imgbbKey');
         
+        // Fungsi untuk mengirim data kembali ke App Inventor
+        function sendToAppInventor(data) {
+            // Jika dijalankan di WebView Android
+            if (window.Android) {
+                window.Android.receiveFromWeb(JSON.stringify(data));
+            } 
+            // Jika dijalankan di WebView iOS (WKWebView)
+            else if (window.webkit && window.webkit.messageHandlers) {
+                window.webkit.messageHandlers.iosHandler.postMessage(data);
+            }
+            // Untuk debugging di browser
+            else {
+                console.log("Data untuk App Inventor:", data);
+            }
+        }
+        
         // Fungsi untuk menampilkan notifikasi
         function showNotification(message, type) {
             const notification = document.getElementById('notification');
@@ -593,6 +609,12 @@
         function enableButton() {
             saveBtn.disabled = false;
             saveBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Profil';
+        }
+        
+        // Isi nilai awal jika ada di URL
+        if (initialPhone) {
+            phoneInput.value = initialPhone;
+            userData.phone = initialPhone;
         }
         
         // Event listener untuk upload foto
@@ -680,11 +702,10 @@
             try {
                 // Upload foto ke imgBB
                 const formData = new FormData();
-                formData.append('key', imgbbKey);
                 formData.append('image', userData.photoFile);
+                formData.append('key', imgbbKey);
                 
-                const uploadUrl = `https://api.imgbb.com/1/upload`;
-                const response = await fetch(uploadUrl, {
+                const response = await fetch('https://api.imgbb.com/1/upload', {
                     method: 'POST',
                     body: formData
                 });
@@ -692,85 +713,34 @@
                 const result = await response.json();
                 
                 if (!result.success) {
-                    throw new Error(result.error.message || 'Upload foto gagal');
+                    throw new Error(result.error.message || 'Gagal mengupload foto');
                 }
                 
-                // Dapatkan URL gambar
                 userData.photoUrl = result.data.url;
                 
-                // Kirim data ke WebView App Inventor
-                const responseData = {
-                    action: "profile_update",
-                    userID: userID,
+                // Kirim data ke App Inventor
+                sendToAppInventor({
+                    action: "profile_update_success",
                     phone: userData.phone,
                     photoUrl: userData.photoUrl
-                };
-                
-                // Kirim ke aplikasi melalui WebView
-                sendToAppInventor(responseData);
+                });
                 
                 // Tampilkan notifikasi sukses
                 showNotification('Profil berhasil disimpan!', 'success');
+                
             } catch (error) {
-                console.error('Error saving profile:', error);
-                
-                // Kirim error ke aplikasi
-                const errorData = {
-                    action: "profile_update_error",
-                    error: error.message || "Terjadi kesalahan saat menyimpan profil"
-                };
-                
-                sendToAppInventor(errorData);
-                
-                showNotification(`Gagal: ${error.message || 'Terjadi kesalahan'}`, 'error');
-            } finally {
-                // Sembunyikan loading
-                hideLoading();
-                enableButton();
-            }
-        });
-        
-        // Fungsi untuk mengirim data ke App Inventor WebView
-        function sendToAppInventor(data) {
-            // Android
-            if (window.AppInventor && window.AppInventor.setWebViewString) {
-                window.AppInventor.setWebViewString(JSON.stringify(data));
-            }
-            // iOS
-            else if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.iosHandler) {
-                window.webkit.messageHandlers.iosHandler.postMessage(JSON.stringify(data));
-            }
-            // Android alternative
-            else if (window.AndroidInterface) {
-                window.AndroidInterface.receiveData(JSON.stringify(data));
-            }
-            else {
-                console.log("App Inventor interface not found. Data:", data);
-                // Untuk keperluan pengujian, tampilkan data di konsol
-                showNotification(`Data dikirim: ${JSON.stringify(data)}`, 'success');
-            }
-        }
-        
-        // Inisialisasi saat halaman dimuat
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!userID) {
-                showNotification('ID pengguna tidak ditemukan', 'error');
-                return;
-            }
-            
-            if (initialPhone) {
-                phoneInput.value = initialPhone;
-            }
-            
-            // Periksa API Key imgBB
-            if (!imgbbKey) {
-                showNotification('API Key imgBB tidak ditemukan', 'error');
+                console.error('Error:', error);
+                showNotification(`Gagal menyimpan profil: ${error.message}`, 'error');
                 
                 // Kirim error ke aplikasi
                 sendToAppInventor({
                     action: "profile_update_error",
-                    error: "API Key imgBB tidak ditemukan"
+                    error: error.message
                 });
+                
+            } finally {
+                hideLoading();
+                enableButton();
             }
         });
     </script>
