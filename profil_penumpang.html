@@ -504,21 +504,15 @@
         <div class="tech-container">
             <div class="tech-item">
                 <div class="tech-icon">
-                    <i class="fab fa-firebase"></i>
+                    <i class="fas fa-mobile-alt"></i>
                 </div>
-                <div class="tech-label">Firebase</div>
+                <div class="tech-label">WebView</div>
             </div>
             <div class="tech-item">
                 <div class="tech-icon">
                     <i class="fas fa-cloud-upload-alt"></i>
                 </div>
                 <div class="tech-label">imgBB</div>
-            </div>
-            <div class="tech-item">
-                <div class="tech-icon">
-                    <i class="fas fa-mobile-alt"></i>
-                </div>
-                <div class="tech-label">WebView</div>
             </div>
         </div>
     </div>
@@ -536,10 +530,6 @@
         <p id="loadingText">Mengupload foto ke imgBB...</p>
     </div>
     
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-    
     <script>
         // Data pengguna
         let userData = {
@@ -547,10 +537,6 @@
             photoFile: null,
             photoUrl: ""
         };
-        
-        // Status Firebase
-        let firebaseInitialized = false;
-        let databaseRef;
         
         // Elemen DOM
         const phoneInput = document.getElementById('phone');
@@ -570,7 +556,6 @@
         const userID = urlParams.get('userID');
         const initialPhone = urlParams.get('phone');
         const imgbbKey = urlParams.get('imgbbKey');
-        const firebaseConfigEncoded = urlParams.get('firebaseConfig');
         
         // Fungsi untuk menampilkan notifikasi
         function showNotification(message, type) {
@@ -608,32 +593,6 @@
         function enableButton() {
             saveBtn.disabled = false;
             saveBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Profil';
-        }
-        
-        // Fungsi untuk inisialisasi Firebase
-        function initializeFirebase() {
-            if (!firebaseConfigEncoded) {
-                console.log('Konfigurasi Firebase tidak ditemukan');
-                return false;
-            }
-            
-            try {
-                // Decode konfigurasi Firebase
-                const decodedConfig = decodeURIComponent(firebaseConfigEncoded);
-                const firebaseConfig = JSON.parse(decodedConfig);
-                
-                // Inisialisasi Firebase
-                firebase.initializeApp(firebaseConfig);
-                
-                // Inisialisasi Database
-                databaseRef = firebase.database().ref();
-                
-                console.log('Firebase initialized successfully');
-                return true;
-            } catch (error) {
-                console.error('Error initializing Firebase:', error);
-                return false;
-            }
         }
         
         // Event listener untuk upload foto
@@ -703,12 +662,10 @@
                 showNotification('API Key imgBB tidak ditemukan', 'error');
                 
                 // Kirim error ke aplikasi
-                if (window.AppInventor) {
-                    window.AppInventor.setWebViewString(JSON.stringify({
-                        action: "profile_update_error",
-                        error: "API Key imgBB tidak ditemukan"
-                    }));
-                }
+                sendToAppInventor({
+                    action: "profile_update_error",
+                    error: "API Key imgBB tidak ditemukan"
+                });
                 
                 return;
             }
@@ -741,20 +698,7 @@
                 // Dapatkan URL gambar
                 userData.photoUrl = result.data.url;
                 
-                // Tampilkan status
-                showLoading('Menyimpan data ke Firebase...');
-                
-                // Simpan data ke Firebase
-                if (firebaseInitialized) {
-                    await databaseRef.child(`Users/${userID}`).set({
-                        phone: userData.phone,
-                        photoUrl: userData.photoUrl
-                    });
-                } else {
-                    console.log('Firebase tidak terinisialisasi, lewati penyimpanan ke Firebase');
-                }
-                
-                // Kirim data ke WebView
+                // Kirim data ke WebView App Inventor
                 const responseData = {
                     action: "profile_update",
                     userID: userID,
@@ -763,11 +707,7 @@
                 };
                 
                 // Kirim ke aplikasi melalui WebView
-                if (window.AppInventor) {
-                    window.AppInventor.setWebViewString(JSON.stringify(responseData));
-                } else {
-                    console.log("AppInventor interface not found. Data:", responseData);
-                }
+                sendToAppInventor(responseData);
                 
                 // Tampilkan notifikasi sukses
                 showNotification('Profil berhasil disimpan!', 'success');
@@ -780,9 +720,7 @@
                     error: error.message || "Terjadi kesalahan saat menyimpan profil"
                 };
                 
-                if (window.AppInventor) {
-                    window.AppInventor.setWebViewString(JSON.stringify(errorData));
-                }
+                sendToAppInventor(errorData);
                 
                 showNotification(`Gagal: ${error.message || 'Terjadi kesalahan'}`, 'error');
             } finally {
@@ -792,21 +730,24 @@
             }
         });
         
-        // Fungsi untuk mengirim data ke Android
-        function sendToAndroid(data) {
+        // Fungsi untuk mengirim data ke App Inventor WebView
+        function sendToAppInventor(data) {
             // Android
-            if (window.AndroidInterface && window.AndroidInterface.postMessage) {
-                window.AndroidInterface.postMessage(data);
+            if (window.AppInventor && window.AppInventor.setWebViewString) {
+                window.AppInventor.setWebViewString(JSON.stringify(data));
             }
             // iOS
             else if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.iosHandler) {
-                window.webkit.messageHandlers.iosHandler.postMessage(data);
+                window.webkit.messageHandlers.iosHandler.postMessage(JSON.stringify(data));
             }
-            // Simulator/testing
+            // Android alternative
+            else if (window.AndroidInterface) {
+                window.AndroidInterface.receiveData(JSON.stringify(data));
+            }
             else {
                 console.log("App Inventor interface not found. Data:", data);
                 // Untuk keperluan pengujian, tampilkan data di konsol
-                showNotification(`Data dikirim: ${data}`, 'success');
+                showNotification(`Data dikirim: ${JSON.stringify(data)}`, 'success');
             }
         }
         
@@ -821,27 +762,15 @@
                 phoneInput.value = initialPhone;
             }
             
-            // Inisialisasi Firebase
-            firebaseInitialized = initializeFirebase();
-            
-            // Tampilkan status
-            if (firebaseInitialized) {
-                console.log('Firebase initialized');
-            } else {
-                console.log('Firebase not initialized');
-            }
-            
             // Periksa API Key imgBB
             if (!imgbbKey) {
                 showNotification('API Key imgBB tidak ditemukan', 'error');
                 
                 // Kirim error ke aplikasi
-                if (window.AppInventor) {
-                    window.AppInventor.setWebViewString(JSON.stringify({
-                        action: "profile_update_error",
-                        error: "API Key imgBB tidak ditemukan"
-                    }));
-                }
+                sendToAppInventor({
+                    action: "profile_update_error",
+                    error: "API Key imgBB tidak ditemukan"
+                });
             }
         });
     </script>
