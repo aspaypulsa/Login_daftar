@@ -1,235 +1,153 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Profil Penumpang</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
     body {
       background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
-      color: #333;
       min-height: 100vh;
-      padding: 20px;
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
+      padding: 20px;
     }
-
     .container {
-      max-width: 500px;
-      width: 100%;
       background: white;
       padding: 30px;
       border-radius: 20px;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-    }
-
-    .header {
+      max-width: 400px;
+      width: 100%;
       text-align: center;
-      margin-bottom: 30px;
-      position: relative;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     }
-
-    .header h1 {
-      font-size: 2rem;
+    .container h2 {
       color: #1a73e8;
-    }
-
-    .header::after {
-      content: '';
-      position: absolute;
-      bottom: -10px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 80px;
-      height: 4px;
-      background: linear-gradient(90deg, #4285f4, #34a853, #ea4335, #fbbc05);
-      border-radius: 2px;
-    }
-
-    .form-group {
       margin-bottom: 20px;
     }
-
-    label {
-      font-weight: bold;
-      display: block;
-      margin-bottom: 6px;
-    }
-
     input[type="text"] {
       width: 100%;
       padding: 12px;
+      margin-bottom: 20px;
+      border: 2px solid #ddd;
+      border-radius: 10px;
       font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
     }
-
-    .photo-upload {
-      text-align: center;
-      background: #f8f9fa;
-      padding: 20px;
-      border-radius: 15px;
-      border: 2px dashed #dadce0;
-    }
-
     .photo-preview {
-      width: 160px;
-      height: 160px;
+      width: 150px;
+      height: 150px;
       border-radius: 50%;
-      margin: auto;
-      border: 2px dashed #dadce0;
+      border: 2px dashed #ccc;
+      margin: 0 auto 20px;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
       position: relative;
-      background: #fff;
-      cursor: pointer;
     }
-
-    .photo-preview i {
-      font-size: 48px;
-      color: #dadce0;
-    }
-
-    .photo-preview img {
+    #previewImage {
+      display: none;
       width: 100%;
       height: 100%;
       object-fit: cover;
-      display: none;
     }
-
     .upload-btn {
-      margin-top: 20px;
       background: #1a73e8;
       color: white;
-      padding: 12px 24px;
-      border-radius: 30px;
       border: none;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    .status-badge {
-      display: inline-block;
-      margin-top: 15px;
-      padding: 6px 14px;
-      background: #e8f0fe;
-      color: #1a73e8;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 13px;
-    }
-
-    .submit-btn {
-      margin-top: 30px;
-      background: #34a853;
-      color: white;
-      padding: 14px;
-      width: 100%;
-      border: none;
-      font-size: 18px;
-      font-weight: bold;
+      padding: 12px 20px;
       border-radius: 10px;
       cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    .status {
+      font-size: 13px;
+      color: gray;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1>Profil Penumpang</h1>
-      <p>Lengkapi data diri Anda</p>
+    <h2>Profil Penumpang</h2>
+    <input type="text" id="phoneInput" placeholder="Masukkan Nomor HP" />
+
+    <div class="photo-preview" onclick="selectPhoto()">
+      <i class="fas fa-camera" style="font-size: 40px; color: #ccc;"></i>
+      <img id="previewImage" />
     </div>
 
-    <div class="form-group">
-      <label for="phone">Nomor HP</label>
-      <input type="text" id="phone" placeholder="Contoh: 082123456789">
-    </div>
-
-    <div class="photo-upload">
-      <div class="photo-preview" id="photoPreview" onclick="requestPhotoFromApp()">
-        <i class="fas fa-camera"></i>
-        <img id="previewImage" src="" alt="Preview" />
-      </div>
-      <button class="upload-btn" onclick="requestPhotoFromApp()">
-        <i class="fas fa-upload"></i> Pilih Foto Profil
-      </button>
-      <div class="status-badge">Maksimal 5MB</div>
-    </div>
-
-    <button class="submit-btn" onclick="kirimKeKodular()">Simpan Profil</button>
+    <button class="upload-btn" onclick="selectPhoto()">Pilih Foto Profil</button>
+    <div class="status" id="statusText">Maksimal 5MB</div>
   </div>
 
   <script>
-    let fotoBase64 = "";
+    const urlParams = new URLSearchParams(window.location.search);
+    const imgbbKey = urlParams.get("imgbbKey");
+    const statusText = document.getElementById("statusText");
 
-    function requestPhotoFromApp() {
-      if (window.AppInventor && window.AppInventor.setWebViewString) {
-        window.AppInventor.setWebViewString("OPEN_GALLERY");
-      } else {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.onchange = e => {
-          const file = e.target.files[0];
-          if (file.size > 5 * 1024 * 1024) {
-            alert('Ukuran maksimal 5MB');
-            return;
-          }
-          const reader = new FileReader();
-          reader.onload = evt => {
-            fotoBase64 = evt.target.result.split(",")[1];
-            tampilkanPreview(evt.target.result);
-          };
-          reader.readAsDataURL(file);
+    function selectPhoto() {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = async function (e) {
+        const file = e.target.files[0];
+        if (!file || file.size > 5 * 1024 * 1024) {
+          alert("Ukuran file maksimal 5MB");
+          return;
+        }
+
+        // Preview
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          const img = document.getElementById("previewImage");
+          img.src = event.target.result;
+          img.style.display = "block";
+          document.querySelector(".photo-preview i").style.display = "none";
         };
-        input.click();
-      }
-    }
+        reader.readAsDataURL(file);
 
-    // Fungsi ini dipanggil dari Kodular dengan gambar Base64
-    window.receiveImageFromApp = function(base64Data) {
-      fotoBase64 = base64Data;
-      const src = "data:image/jpeg;base64," + base64Data;
-      tampilkanPreview(src);
-      return true;
-    };
+        // Upload to imgbb
+        const formData = new FormData();
+        formData.append("image", file);
 
-    function tampilkanPreview(src) {
-      const img = document.getElementById("previewImage");
-      img.src = src;
-      img.style.display = "block";
-      document.querySelector("#photoPreview i").style.display = "none";
-    }
-
-    function kirimKeKodular() {
-      const hp = document.getElementById("phone").value.trim();
-      if (!hp) {
-        alert("Masukkan nomor HP terlebih dahulu");
-        return;
-      }
-
-      const data = {
-        phone: hp,
-        photo: fotoBase64
+        statusText.innerText = "Mengunggah foto...";
+        try {
+          const res = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, {
+            method: "POST",
+            body: formData
+          });
+          const data = await res.json();
+          if (data.success) {
+            const imageUrl = data.data.url;
+            statusText.innerText = "Foto berhasil diunggah!";
+            sendToKodular(imageUrl);
+          } else {
+            statusText.innerText = "Gagal mengunggah foto.";
+          }
+        } catch (err) {
+          console.error("Upload error:", err);
+          statusText.innerText = "Gagal upload.";
+        }
       };
+      input.click();
+    }
 
-      const jsonStr = JSON.stringify(data);
+    function sendToKodular(photoUrl) {
+      const phone = document.getElementById("phoneInput").value;
+      const result = JSON.stringify({
+        phone: phone,
+        photo_url: photoUrl
+      });
 
       if (window.AppInventor && window.AppInventor.setWebViewString) {
-        window.AppInventor.setWebViewString(jsonStr);
+        window.AppInventor.setWebViewString(result);
+        console.log("Dikirim ke Kodular:", result);
       } else {
-        alert("WebViewString:\n\n" + jsonStr);
+        console.log("WebViewString:", result);
       }
     }
   </script>
